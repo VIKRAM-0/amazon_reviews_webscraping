@@ -5,6 +5,7 @@ from pydantic import BaseModel
 import pandas as pd
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
+import numpy as np
 
 # Download NLTK data for sentiment analysis
 nltk.download("vader_lexicon")
@@ -42,15 +43,23 @@ def review_retrieval(
     storage: str = Query(None, description="Filter by storage size"),
     verified: str = Query(None, description="Filter by verified purchase status (Yes or No)")
 ):
-    filtered_reviews = reviews_df.copy()
+    filtered_reviews = reviews_df
+
+    # Apply color filter
     if color:
         filtered_reviews = filtered_reviews[filtered_reviews["product_color"].str.lower() == color.lower()]
+
+    # Apply storage filter
     if storage:
         filtered_reviews = filtered_reviews[filtered_reviews["product_size"].str.lower() == storage.lower()]
+
+    # Apply verified purchase filter, normalizing values to ensure matching
     if verified:
-        filtered_reviews = filtered_reviews[filtered_reviews["Verified Purchase"].str.lower() == verified.lower()]
+        filtered_reviews = filtered_reviews[filtered_reviews["Verified Purchase"].str.strip().str.lower() == verified.strip().lower()]
     
-    filtered_reviews = filtered_reviews[pd.notnull(filtered_reviews["Review Text"])]
+    # Handle missing or non-JSON-compliant values
+    filtered_reviews = filtered_reviews.replace([np.inf, -np.inf], np.nan).fillna("N/A")
+
     return {"filtered_reviews": filtered_reviews.to_dict(orient="records")}
 
 # Endpoint: Serve HTML file
