@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review Sentiment Analysis</title>
+    <link rel="stylesheet" href="C:\Users\vikra\project_python\static\styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Review Sentiment Analysis</h1>
+        </header>
+        <!-- Sentiment Analysis Section -->
+        <section id="sentiment-section">
+            <h2>Sentiment Analysis by Reviewer Name</h2>
+            <label for="reviewerName">Reviewer Name:</label>
+            <input type="text" id="reviewerName" placeholder="Enter the reviewer's name">
+            <button onclick="analyzeSentiment()">Get Sentiment</button>
+            <button onclick="clearSentiment()">Clear</button>
+            <div id="sentimentOutput" class="output"></div>
+        </section>
+
+        <!-- Review Retrieval Section -->
+        <section id="retrieval-section">
+            <h2>Review Retrieval by Product Attributes</h2>
+            <label for="color">Color:</label>
+            <input type="text" id="color" placeholder="Enter color (e.g., Black)">
+            <br>
+            <label for="storage">Storage:</label>
+            <input type="text" id="storage" placeholder="Enter storage size (e.g., 128GB)">
+            <br>
+            <label for="verified">Verified Purchase:</label>
+            <input type="text" id="verified" placeholder="Yes or No">
+            <button onclick="retrieveReviews()">Retrieve Reviews</button>
+            <button onclick="clearRetrieval()">Clear</button>
+            <div id="retrievalOutput" class="output"></div>
+        </section>
+    </div>
+
+    <script>
+        async function analyzeSentiment() {
+            const reviewerName = document.getElementById('reviewerName').value;
+            const response = await fetch(`/sentiment-analysis/?reviewer_name=${reviewerName}`);
+            const result = await response.json();
+
+            if (result.error) {
+                document.getElementById('sentimentOutput').innerHTML = `<strong>Error:</strong> ${result.error}`;
+            } else {
+                document.getElementById('sentimentOutput').innerHTML = 
+                    `<strong>Review:</strong> ${result.review}<br><strong>Sentiment:</strong> ${result.sentiment}`;
+            }
+        }
+
+        async function retrieveReviews() {
+            const color = document.getElementById('color').value;
+            const storage = document.getElementById('storage').value;
+            const verified = document.getElementById('verified').value;
+
+            const queryParams = new URLSearchParams({ color, storage, verified }).toString();
+            const response = await fetch(`/review-retrieval/?${queryParams}`);
+            const result = await response.json();
+
+            if (result.filtered_reviews && result.filtered_reviews.length > 0) {
+                document.getElementById('retrievalOutput').innerHTML = 
+                    `<h3>Filtered Reviews:</h3>` + 
+                    result.filtered_reviews.map(r => `<p><strong>${r["Reviewer Name"]}</strong>: ${r["Review Text"]}</p>`).join('');
+            } else {
+                document.getElementById('retrievalOutput').innerHTML = `<strong>No reviews found with the specified criteria.</strong>`;
+            }
+        }
+
+        // Clear function for Sentiment Analysis section
+        function clearSentiment() {
+            document.getElementById('reviewerName').value = '';
+            document.getElementById('sentimentOutput').innerHTML = '';
+        }
+
+        // Clear function for Review Retrieval section
+        function clearRetrieval() {
+            document.getElementById('color').value = '';
+            document.getElementById('storage').value = '';
+            document.getElementById('verified').value = '';
+            document.getElementById('retrievalOutput').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
